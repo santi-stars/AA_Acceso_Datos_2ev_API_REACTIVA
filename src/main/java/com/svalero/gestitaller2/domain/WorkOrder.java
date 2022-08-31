@@ -3,6 +3,8 @@ package com.svalero.gestitaller2.domain;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -13,18 +15,16 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "work_order")
+@Document(value = "work_order")
 @Table(name = "work_order")
 public class WorkOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @PositiveOrZero
-    private long id;
-    @Column(name = "order_date")
+    private String id;
+    @Field(name = "order_date")
     @NotNull
     private LocalDate orderDate;
-    @Column
+    @Field
     @NotBlank
     private String description;
     @ManyToOne

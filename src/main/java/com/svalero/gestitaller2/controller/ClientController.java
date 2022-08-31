@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -29,11 +31,11 @@ public class ClientController {
 
     // FILTRADO por 3 campos
     @GetMapping("/clients")
-    public ResponseEntity<List<Client>> getClients(@Valid @RequestParam(name = "name", required = false) String name,
+    public ResponseEntity<Flux<Client>> getClients(@Valid @RequestParam(name = "name", required = false) String name,
                                                    @Valid @RequestParam(name = "surname", required = false) String surname,
                                                    @Valid @RequestParam(name = "dni", required = false) String dni,
                                                    @Valid @RequestParam(name = "all", defaultValue = "false") boolean all) {
-        List<Client> clients;
+        Flux<Client> clients;
         logger.info("Inicio getClients");
         if (all) {
             logger.info("Mostrado de todos los clients");
@@ -43,39 +45,39 @@ public class ClientController {
             clients = clientService.findAllClients(name, surname, dni);
         }
         logger.info("Fin getClients");
-        return new ResponseEntity<>(clients, HttpStatus.OK);
+        return ResponseEntity.ok(clients);
     }
 
     @GetMapping("/client/{id}")
-    public ResponseEntity<Client> getById(@PathVariable long id) throws ClientNotFoundException {
+    public ResponseEntity<Mono<Client>> getById(@PathVariable long id) throws ClientNotFoundException {
         logger.info("Inicio getById " + id);
-        Client client = clientService.findById(id);
+        Mono<Client> client = clientService.findById(id);
         logger.info("Fin getById " + id);
-        return new ResponseEntity<>(client, HttpStatus.OK);
+        return ResponseEntity.ok(client);
     }
 
     @PostMapping("/client")
-    public ResponseEntity<Client> addClient(@Valid @RequestBody Client client) {
+    public ResponseEntity<Mono<Client>> addClient(@Valid @RequestBody Client client) {
         logger.info("Inicio addClient");
-        Client newClient = clientService.addClient(client);
+        Mono<Client> newClient = clientService.addClient(client);
         logger.info("Fin addClient");
-        return new ResponseEntity<>(newClient, HttpStatus.CREATED);
+        return ResponseEntity.ok(newClient);
     }
 
     @DeleteMapping("/client/{id}")
-    public ResponseEntity<Client> deleteClient(@PathVariable long id) throws ClientNotFoundException {
+    public ResponseEntity<Mono<Client>> deleteClient(@PathVariable long id) throws ClientNotFoundException {
         logger.info("Inicio deleteClient " + id);
-        Client client = clientService.deleteClient(id);
+        Mono<Client> client = clientService.deleteClient(id);
         logger.info("Fin deleteClient " + id);
-        return new ResponseEntity<>(client, HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok(client);
     }
 
     @PutMapping("/client/{id}")
-    public ResponseEntity<Client> modifyClient(@Valid @RequestBody Client client, @PathVariable long id) throws ClientNotFoundException {
+    public ResponseEntity<Mono<Client>> modifyClient(@Valid @RequestBody Client client, @PathVariable long id) throws ClientNotFoundException {
         logger.info("Inicio modifyClient " + id);
-        Client newClient = clientService.modifyClient(id, client);
+        Mono<Client> newClient = clientService.modifyClient(id, client);
         logger.info("Fin modifyClient " + id);
-        return new ResponseEntity<>(newClient, HttpStatus.OK);
+        return ResponseEntity.ok(newClient);
     }
 
     @ExceptionHandler(ClientNotFoundException.class)

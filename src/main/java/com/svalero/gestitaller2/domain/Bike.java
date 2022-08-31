@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -13,23 +15,20 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "bike")
+@Document(value = "bike")
 public class Bike {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @PositiveOrZero
-    private long id;
-    @Column
-    @NotBlank
+    private String id;
+    @Field
     private String brand;
-    @Column
+    @Field
     @NotBlank
     private String model;
-    @Column
+    @Field
     @NotBlank
     private String licensePlate;
-    @Column
+    @Field
     @Lob
     private byte[] bikeImage;
     @ManyToOne

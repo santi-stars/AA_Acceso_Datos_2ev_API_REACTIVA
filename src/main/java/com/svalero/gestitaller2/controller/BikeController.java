@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -30,11 +32,11 @@ public class BikeController {
     private final Logger logger = LoggerFactory.getLogger(BikeController.class);
 
     @GetMapping("/bikes")
-    public ResponseEntity<List<Bike>> getBikes(@Valid @RequestParam(name = "brand", required = false) String brand,
+    public ResponseEntity<Flux<Bike>> getBikes(@Valid @RequestParam(name = "brand", required = false) String brand,
                                                @Valid @RequestParam(name = "model", required = false) String model,
                                                @Valid @RequestParam(name = "license", required = false) String license,
                                                @Valid @RequestParam(name = "all", defaultValue = "false") boolean all) {
-        List<Bike> bikes;
+        Flux<Bike> bikes;
         logger.info("Inicio getBikes");
         if (all) {
             logger.info("Mostrado de todas las bikes");
@@ -44,47 +46,46 @@ public class BikeController {
             bikes = bikeService.findAll(brand, model, license);
         }
         logger.info("Fin getBikes");
-        return new ResponseEntity<>(bikes, HttpStatus.OK);
+        return ResponseEntity.ok(bikes);
     }
 
     @GetMapping("/bike/{id}")
-    public ResponseEntity<Bike> getById(@PathVariable long id) throws BikeNotFoundException {
+    public ResponseEntity<Mono<Bike>> getById(@PathVariable long id) throws BikeNotFoundException {
         logger.info("Inicio getById " + id);
-        Bike bike = bikeService.findById(id);
+        Mono<Bike> bike = bikeService.findById(id);
         logger.info("Fin getById " + id);
-        return new ResponseEntity<>(bike, HttpStatus.OK);
+        return ResponseEntity.ok(bike);
     }
 
     @GetMapping("/client/{id}/bikes")
-    public ResponseEntity<List<Bike>> getBikesByClient(@PathVariable long id) throws ClientNotFoundException, BikeNotFoundException {
+    public ResponseEntity<Flux<Bike>> getBikesByClient(@PathVariable long id) throws ClientNotFoundException, BikeNotFoundException {
         logger.info("Inicio getBikesByClient " + id);
-        List<Bike> bikes = bikeService.findBikesByClient(id);
+        Flux<Bike> bikes = bikeService.findBikesByClient(id);
         logger.info("Fin getBikesByClient " + id);
-        return new ResponseEntity<>(bikes, HttpStatus.OK);
+        return ResponseEntity.ok(bikes);
     }
 
     @PostMapping("/bike")
-    public ResponseEntity<Bike> addBike(@Valid @RequestBody BikeDTO bikeDTO) throws ClientNotFoundException {
+    public ResponseEntity<Mono<Bike>> addBike(@Valid @RequestBody BikeDTO bikeDTO) throws ClientNotFoundException {
         logger.info("Inicio addBike");
-        Bike newBike = bikeService.addBike(bikeDTO);
+        Mono<Bike> newBike = bikeService.addBike(bikeDTO);
         logger.info("Fin addBike");
-        return new ResponseEntity<>(newBike, HttpStatus.CREATED);
+        return ResponseEntity.ok(newBike);
     }
 
     @DeleteMapping("/bike/{id}")
-    public ResponseEntity<Bike> deleteBike(@PathVariable long id) throws BikeNotFoundException {
+    public void deleteBike(@PathVariable long id) throws BikeNotFoundException {
         logger.info("Inicio deleteBike " + id);
-        Bike bike = bikeService.deleteBike(id);
+        bikeService.deleteBike(id);
         logger.info("Fin deleteBike " + id);
-        return new ResponseEntity<>(bike, HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/bike/{id}")
-    public ResponseEntity<Bike> modifyBike(@Valid @RequestBody BikeDTO bikeDTO, @PathVariable long id) throws BikeNotFoundException, ClientNotFoundException {
+    public ResponseEntity<Mono<Bike>> modifyBike(@Valid @RequestBody BikeDTO bikeDTO, @PathVariable long id) throws BikeNotFoundException, ClientNotFoundException {
         logger.info("Inicio modifyBike " + id);
-        Bike newBike = bikeService.modifyBike(id, bikeDTO);
+        Mono<Bike> newBike = bikeService.modifyBike(id, bikeDTO);
         logger.info("Fin modifyBike " + id);
-        return new ResponseEntity<>(newBike, HttpStatus.OK);
+        return ResponseEntity.ok(newBike);
     }
 
     @ExceptionHandler(BikeNotFoundException.class)

@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class WorkOrderServiceImpl implements WorkOrderService {
@@ -31,57 +31,58 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
 
     @Override
-    public List<WorkOrder> findAllOrders() {
+    public Flux<WorkOrder> findAllOrders() {
         return wokrOrderRepository.findAll();
     }
 
     @Override
-    public List<WorkOrder> findAllOrders(String nameSurname, String brandModel, String licensePlate) {
+    public Flux<WorkOrder> findAllOrders(String nameSurname, String brandModel, String licensePlate) {
         logger.info("Filtrado por parámetro (ServiceIMPL): nameSurname=" + nameSurname + "// brandModel=" + brandModel + "// licensePlate=" + licensePlate);
         return wokrOrderRepository.findByClient_NameContainingOrClient_SurnameContainingOrBike_BrandContainingOrBike_ModelContainingOrBike_LicensePlateContaining(nameSurname, brandModel, licensePlate);
     }
 
     @Override
-    public WorkOrder findById(long id) throws WorkOrderNotFoundException {
-        return wokrOrderRepository.findById(id).orElseThrow(WorkOrderNotFoundException::new);
+    public Mono<WorkOrder> findById(long id) throws WorkOrderNotFoundException {
+        return wokrOrderRepository.findById(id).onErrorReturn(new WorkOrder());
     }
 
     @Override
-    public WorkOrder deleteOrder(long id) throws WorkOrderNotFoundException {
-        WorkOrder mechanic = wokrOrderRepository.findById(id).orElseThrow(WorkOrderNotFoundException::new);
-        wokrOrderRepository.delete(mechanic);
+    public Mono<WorkOrder> deleteOrder(long id) throws WorkOrderNotFoundException {
+        Mono<WorkOrder> mechanic = wokrOrderRepository.findById(id).onErrorReturn(new WorkOrder());
+        wokrOrderRepository.delete(mechanic.block());
         return mechanic;
     }
 
     @Override
-    public WorkOrder addOrder(WorkOrderDTO newWorkOrderDTO) throws BikeNotFoundException, ClientNotFoundException {
+    public Mono<WorkOrder> addOrder(WorkOrderDTO newWorkOrderDTO) throws BikeNotFoundException, ClientNotFoundException {
+
+        Mono<Bike> monoBike = bikeRepository.findById(newWorkOrderDTO.getBike()).onErrorReturn(new Bike());
+        Mono<Client> monoClient = clientRepository.findById(newWorkOrderDTO.getClient()).onErrorReturn(new Client());
+
+        Bike bike = monoBike.block();
+        Client client = monoClient.block();
 
         ModelMapper mapper = new ModelMapper();
         WorkOrder workOrder = mapper.map(newWorkOrderDTO, WorkOrder.class);
 
-        workOrder.setBike(bikeRepository.findById(newWorkOrderDTO.getBike())
-                .orElseThrow(BikeNotFoundException::new));
-
-        workOrder.setClient(clientRepository.findById(newWorkOrderDTO.getClient())
-                .orElseThrow(ClientNotFoundException::new));
+        workOrder.setBike(bike);
+        workOrder.setClient(client);
 
         return wokrOrderRepository.save(workOrder);
     }
 
     @Override
-    public WorkOrder modifyOrder(long id, WorkOrderDTO newWorkOrderDTO) throws WorkOrderNotFoundException,
+    public Mono<WorkOrder> modifyOrder(long id, WorkOrderDTO newWorkOrderDTO) throws WorkOrderNotFoundException,
             BikeNotFoundException, ClientNotFoundException {
 
-        wokrOrderRepository.findById(id).orElseThrow(WorkOrderNotFoundException::new);
+        wokrOrderRepository.findById(id).onErrorReturn(new WorkOrder());
 
         ModelMapper mapper = new ModelMapper();
         WorkOrder workOrder = mapper.map(newWorkOrderDTO, WorkOrder.class);
 
-        workOrder.setId(id);
-        workOrder.setBike(bikeRepository.findById(newWorkOrderDTO.getBike())
-                .orElseThrow(BikeNotFoundException::new));
-        workOrder.setClient(clientRepository.findById(newWorkOrderDTO.getClient())
-                .orElseThrow(ClientNotFoundException::new));
+        workOrder.setId(String.valueOf(id));
+        workOrder.setBike(bikeRepository.findById(newWorkOrderDTO.getBike()).block());
+        workOrder.setClient(clientRepository.findById(newWorkOrderDTO.getClient()).block());
 
         return wokrOrderRepository.save(workOrder);
     }

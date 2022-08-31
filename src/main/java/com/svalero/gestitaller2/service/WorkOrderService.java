@@ -5,23 +5,23 @@ import com.svalero.gestitaller2.domain.dto.WorkOrderDTO;
 import com.svalero.gestitaller2.exception.BikeNotFoundException;
 import com.svalero.gestitaller2.exception.ClientNotFoundException;
 import com.svalero.gestitaller2.exception.WorkOrderNotFoundException;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface WorkOrderService {
 
-    List<WorkOrder> findAllOrders();
+    Flux<WorkOrder> findAllOrders();
 
-    List<WorkOrder> findAllOrders(String nameSurname, String brandModel, String licensePlate);
+    Flux<WorkOrder> findAllOrders(String nameSurname, String brandModel, String licensePlate);
 
-    WorkOrder findById(long id) throws WorkOrderNotFoundException;
+    Mono<WorkOrder> findById(long id) throws WorkOrderNotFoundException;
 
-    WorkOrder deleteOrder(long id) throws WorkOrderNotFoundException;
+    Mono<WorkOrder> deleteOrder(long id) throws WorkOrderNotFoundException;
 
-    WorkOrder addOrder(WorkOrderDTO newWorkOrderDTO) throws
+    Mono<WorkOrder> addOrder(WorkOrderDTO newWorkOrderDTO) throws
             BikeNotFoundException, ClientNotFoundException;
 
-    WorkOrder modifyOrder(long id, WorkOrderDTO workOrderDTO) throws WorkOrderNotFoundException,
+    Mono<WorkOrder> modifyOrder(long id, WorkOrderDTO workOrderDTO) throws WorkOrderNotFoundException,
             BikeNotFoundException, ClientNotFoundException;
 
 }

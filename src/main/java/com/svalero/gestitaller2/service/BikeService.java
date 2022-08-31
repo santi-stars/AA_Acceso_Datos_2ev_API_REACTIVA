@@ -5,23 +5,25 @@ import com.svalero.gestitaller2.domain.Client;
 import com.svalero.gestitaller2.domain.dto.BikeDTO;
 import com.svalero.gestitaller2.exception.BikeNotFoundException;
 import com.svalero.gestitaller2.exception.ClientNotFoundException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public interface BikeService {
 
-    List<Bike> findAll();
+    Flux<Bike> findAll();
 
-    List<Bike> findAll(String brand, String model, String license);
+    Flux<Bike> findAll(String  brand, String model, String license);
 
-    Bike findById(long id) throws BikeNotFoundException;
+    Mono<Bike> findById(long id) throws BikeNotFoundException;
 
-    List<Bike> findBikesByClient(long id) throws ClientNotFoundException, BikeNotFoundException;
+    Flux<Bike> findBikesByClient(long id) throws ClientNotFoundException, BikeNotFoundException;
 
-    Bike addBike(BikeDTO bikeDTO) throws ClientNotFoundException;
+    Mono<Bike> addBike(BikeDTO bikeDTO) throws ClientNotFoundException;
 
-    Bike deleteBike(long id) throws BikeNotFoundException;
+    Mono<Bike> deleteBike(long id) throws BikeNotFoundException;
 
-    Bike modifyBike(long id, BikeDTO bikeDTO) throws BikeNotFoundException, ClientNotFoundException;
+    Mono<Bike> modifyBike(long id, BikeDTO bikeDTO) throws BikeNotFoundException, ClientNotFoundException;
 
 }

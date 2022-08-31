@@ -2,21 +2,21 @@ package com.svalero.gestitaller2.service;
 
 import com.svalero.gestitaller2.domain.Client;
 import com.svalero.gestitaller2.exception.ClientNotFoundException;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface ClientService {
 
-    List<Client> findAllClients();
+    Flux<Client> findAllClients();
 
-    List<Client> findAllClients(String name, String surname, String dni);
+    Flux<Client> findAllClients(String name, String surname, String dni);
 
-    Client findById(long id) throws ClientNotFoundException;
+    Mono<Client> findById(long id) throws ClientNotFoundException;
 
-    Client addClient(Client client);
+    Mono<Client> addClient(Client client);
 
-    Client deleteClient(long id) throws ClientNotFoundException;
+    Mono<Client> deleteClient(long id) throws ClientNotFoundException;
 
-    Client modifyClient(long id, Client client) throws ClientNotFoundException;
+    Mono<Client> modifyClient(long id, Client client) throws ClientNotFoundException;
 
 }

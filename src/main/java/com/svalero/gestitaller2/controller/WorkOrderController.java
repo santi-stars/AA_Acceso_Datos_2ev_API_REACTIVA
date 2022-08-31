@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -28,11 +30,11 @@ public class WorkOrderController {
     private final Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
 
     @GetMapping("/orders")
-    public ResponseEntity<List<WorkOrder>> getOrders(@Valid @RequestParam(name = "name_surname", required = false) String nameSurname,
+    public ResponseEntity<Flux<WorkOrder>> getOrders(@Valid @RequestParam(name = "name_surname", required = false) String nameSurname,
                                                      @Valid @RequestParam(name = "brand_model", required = false) String brandModel,
                                                      @Valid @RequestParam(name = "license_plate", required = false) String licensePlate,
                                                      @Valid @RequestParam(name = "all", defaultValue = "false") boolean all) {
-        List<WorkOrder> orders;
+        Flux<WorkOrder> orders;
         logger.info("Inicio getOrders");
         if (all) {
             logger.info("Mostrado de todas las órdenes");
@@ -42,43 +44,43 @@ public class WorkOrderController {
             orders = workOrderService.findAllOrders(nameSurname, brandModel, licensePlate);
         }
         logger.info("Fin getOrders");
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/order/{id}")
-    public ResponseEntity<WorkOrder> getById(@Valid @PathVariable long id) throws WorkOrderNotFoundException {
+    public ResponseEntity<Mono<WorkOrder>> getById(@Valid @PathVariable long id) throws WorkOrderNotFoundException {
         logger.info("Inicio getById " + id);
-        WorkOrder order = workOrderService.findById(id);
+        Mono<WorkOrder> order = workOrderService.findById(id);
         logger.info("Fin getById " + id);
-        return new ResponseEntity<>(order, HttpStatus.OK);
+        return ResponseEntity.ok(order);
     }
 
     @DeleteMapping("/order/{id}")
-    public ResponseEntity<WorkOrder> deleteOrder(@Valid @PathVariable long id) throws WorkOrderNotFoundException {
+    public ResponseEntity<Mono<WorkOrder>> deleteOrder(@Valid @PathVariable long id) throws WorkOrderNotFoundException {
         logger.info("Inicio deleteOrder " + id);
-        WorkOrder order = workOrderService.deleteOrder(id);
+        Mono<WorkOrder> order = workOrderService.deleteOrder(id);
         logger.info("Fin deleteOrder " + id);
-        return new ResponseEntity<>(order, HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok(order);
     }
 
     // DTO
     @PostMapping("/order")
-    public ResponseEntity<WorkOrder> addOrder(@Valid @RequestBody WorkOrderDTO newWorkOrderDTO) throws
+    public ResponseEntity<Mono<WorkOrder>> addOrder(@Valid @RequestBody WorkOrderDTO newWorkOrderDTO) throws
             BikeNotFoundException, ClientNotFoundException {
         logger.info("Inicio addOrder");
-        WorkOrder newOrder = workOrderService.addOrder(newWorkOrderDTO);
+        Mono<WorkOrder> newOrder = workOrderService.addOrder(newWorkOrderDTO);
         logger.info("Fin addOrder");
-        return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
+        return ResponseEntity.ok(newOrder);
     }
 
     // DTO
     @PutMapping("/order/{id}")
-    public ResponseEntity<WorkOrder> modifyOrder(@Valid @RequestBody WorkOrderDTO workOrderDTO, @Valid @PathVariable long id) throws WorkOrderNotFoundException,
+    public ResponseEntity<Mono<WorkOrder>> modifyOrder(@Valid @RequestBody WorkOrderDTO workOrderDTO, @Valid @PathVariable long id) throws WorkOrderNotFoundException,
             BikeNotFoundException, ClientNotFoundException {
         logger.info("Inicio modifyOrder " + id);
-        WorkOrder newOrder = workOrderService.modifyOrder(id, workOrderDTO);
+        Mono<WorkOrder> newOrder = workOrderService.modifyOrder(id, workOrderDTO);
         logger.info("Fin modifyOrder " + id);
-        return new ResponseEntity<>(newOrder, HttpStatus.OK);
+        return ResponseEntity.ok(newOrder);
     }
 
     @ExceptionHandler(WorkOrderNotFoundException.class)

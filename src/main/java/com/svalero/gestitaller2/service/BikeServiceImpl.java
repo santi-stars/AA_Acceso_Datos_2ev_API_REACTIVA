@@ -1,7 +1,6 @@
 package com.svalero.gestitaller2.service;
 
 import com.svalero.gestitaller2.domain.Bike;
-import com.svalero.gestitaller2.domain.Client;
 import com.svalero.gestitaller2.domain.WorkOrder;
 import com.svalero.gestitaller2.domain.dto.BikeDTO;
 import com.svalero.gestitaller2.exception.BikeNotFoundException;
@@ -11,8 +10,8 @@ import com.svalero.gestitaller2.repository.ClientRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class BikeServiceImpl implements BikeService {
@@ -23,59 +22,57 @@ public class BikeServiceImpl implements BikeService {
     private ClientRepository clientRepository;
 
     @Override
-    public List<Bike> findAll() {
+    public Flux<Bike> findAll() {
         return bikeRepository.findAll();
     }
 
     @Override
-    public List<Bike> findAll(String brand, String model, String license) {
+    public Flux<Bike> findAll(String brand, String model, String license) {
         return bikeRepository.findByBrandContainingOrModelContainingOrLicensePlateContaining(brand, model, license);
     }
 
     @Override
-    public Bike findById(long id) throws BikeNotFoundException {
-        return bikeRepository.findById(id).orElseThrow(BikeNotFoundException::new);
+    public Mono<Bike> findById(long id) throws BikeNotFoundException {
+        return bikeRepository.findById(id).onErrorReturn(new Bike());
     }
 
     @Override
-    public List<Bike> findBikesByClient(long id) {
+    public Flux<Bike> findBikesByClient(long id) {
         return bikeRepository.findBikesByClient_Id(id);
     }
 
     @Override
-    public Bike addBike(BikeDTO bikeDTO) throws ClientNotFoundException {
+    public Mono<Bike> addBike(BikeDTO bikeDTO) throws ClientNotFoundException {
 
         ModelMapper mapper = new ModelMapper();
         Bike bike = mapper.map(bikeDTO, Bike.class);
 
-        bike.setClient(clientRepository.findById(bikeDTO.getClient())
-                .orElseThrow(ClientNotFoundException::new));
+        bike.setClient(clientRepository.findById(bikeDTO.getClient()).block());
 
         return bikeRepository.save(bike);
     }
 
     @Override
-    public Bike deleteBike(long id) throws BikeNotFoundException {
-        Bike bike = bikeRepository.findById(id).orElseThrow(BikeNotFoundException::new);
+    public Mono<Bike> deleteBike(long id) throws BikeNotFoundException {
+        Mono<Bike> bike = bikeRepository.findById(id).onErrorReturn(new Bike());
         // Pone a null la lista de órdenes de la moto a borrar
-        for (WorkOrder workOrder : bike.getWorkOrders()) workOrder.setBike(null);
-        bikeRepository.delete(bike);
+        for (WorkOrder workOrder : bike.block().getWorkOrders()) workOrder.setBike(null);
+        bikeRepository.delete(bike.block());
         return bike;
     }
 
     @Override
-    public Bike modifyBike(long id, BikeDTO bikeDTO) throws BikeNotFoundException, ClientNotFoundException {
+    public Mono<Bike> modifyBike(long id, BikeDTO bikeDTO) throws BikeNotFoundException, ClientNotFoundException {
 
-        bikeRepository.findById(id).orElseThrow(BikeNotFoundException::new);
+        Mono<Bike> monoBike = bikeRepository.findById(id).onErrorReturn(new Bike());
 
         ModelMapper mapper = new ModelMapper();
-        Bike bike = mapper.map(bikeDTO, Bike.class);
+        Bike newBike = mapper.map(bikeDTO, Bike.class);
 
-        bike.setId(id);
-        bike.setClient(clientRepository.findById(bikeDTO.getClient())
-                .orElseThrow(ClientNotFoundException::new));
+        newBike.setId(String.valueOf(id));
+        newBike.setClient(clientRepository.findById(bikeDTO.getClient()).block());
 
-        return bikeRepository.save(bike);
+        return bikeRepository.save(newBike);
     }
 
 }

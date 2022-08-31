@@ -7,8 +7,8 @@ import com.svalero.gestitaller2.exception.ClientNotFoundException;
 import com.svalero.gestitaller2.repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -17,41 +17,41 @@ public class ClientServiceImpl implements ClientService {
     private ClientRepository clientRepository;
 
     @Override
-    public List<Client> findAllClients() {
+    public Flux<Client> findAllClients() {
         return clientRepository.findAll();
     }
 
     @Override
-    public List<Client> findAllClients(String name, String surname, String dni) {
+    public Flux<Client> findAllClients(String name, String surname, String dni) {
         return clientRepository.findByNameContainingOrSurnameContainingOrDniContaining(name, surname, dni);
     }
 
     @Override
-    public Client findById(long id) throws ClientNotFoundException {
-        return clientRepository.findById(id).orElseThrow(ClientNotFoundException::new);
+    public Mono<Client> findById(long id) throws ClientNotFoundException {
+        return clientRepository.findById(id).onErrorReturn(new Client());
     }
 
     @Override
-    public Client deleteClient(long id) throws ClientNotFoundException {
-        Client client = clientRepository.findById(id).orElseThrow(ClientNotFoundException::new);
+    public Mono<Client> deleteClient(long id) throws ClientNotFoundException {
+        Mono<Client> client = clientRepository.findById(id).onErrorReturn(new Client());
         // Pone a null la lista de órdenes y motos del cliente a borrar
-        for (WorkOrder workOrder : client.getWorkOrders()) workOrder.setClient(null);
-        for (Bike bike : client.getBikes()) bike.setClient(null);
+        for (WorkOrder workOrder : client.block().getWorkOrders()) workOrder.setClient(null);
+        for (Bike bike : client.block().getBikes()) bike.setClient(null);
 
-        clientRepository.delete(client);
+        clientRepository.delete(client.block());
         return client;
     }
 
     @Override
-    public Client addClient(Client client) {
+    public Mono<Client> addClient(Client client) {
         return clientRepository.save(client);
     }
 
     @Override
-    public Client modifyClient(long id, Client newClient) throws ClientNotFoundException {
-        clientRepository.findById(id).orElseThrow(ClientNotFoundException::new);
-        newClient.setId(id);
-        clientRepository.save(newClient);
-        return newClient;
+    public Mono<Client> modifyClient(long id, Client newClient) throws ClientNotFoundException {
+        clientRepository.findById(id).onErrorReturn(new Client());
+        newClient.setId(String.valueOf(id));
+
+        return clientRepository.save(newClient);
     }
 }
